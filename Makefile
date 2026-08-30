@@ -2,7 +2,7 @@ COMPOSE := docker compose
 ENV_FILE := .env
 
 .DEFAULT_GOAL := help
-.PHONY: help up down restart logs console cmd backup snapshots restore pull build smoke
+.PHONY: help up down restart logs console cmd backup snapshots restore pull build smoke sync deploy
 
 help: ## list targets
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -49,6 +49,14 @@ pull: ## pull the latest server image
 
 build: ## build the backup image
 	$(COMPOSE) build
+
+sync: ## [dev machine] rsync the project to a host: make sync [HOST=user@host]
+	./sync.sh $(HOST)
+
+deploy: $(ENV_FILE) ## [target host] pull + build + (re)start after a sync
+	@mkdir -p data
+	$(COMPOSE) pull server
+	$(COMPOSE) up -d --build
 
 smoke: up ## up -> wait healthy -> one backup -> list snapshots
 	@echo "waiting for health..."

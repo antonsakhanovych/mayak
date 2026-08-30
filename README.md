@@ -38,6 +38,8 @@ Connect on `localhost` (or the host's LAN IP), port `SERVER_PORT` (default 25565
 | `make restore SNAP=latest` | restore `./data` from a snapshot (stop the server first) |
 | `make pull` | pull a newer server image |
 | `make smoke` | up → wait healthy → backup → list snapshots |
+| `make sync [HOST=user@host]` | *(dev machine)* rsync the project to a host |
+| `make deploy` | *(target host)* pull + build + (re)start after a sync |
 
 ## Backups
 
@@ -71,11 +73,46 @@ make restore SNAP=latest      # or a snapshot id from `make snapshots`
 make up
 ```
 
+## Sync and deploy
+
+Two steps, run in two places. Sync moves files only; deploy runs on the target.
+
+**1. Sync** — on the dev machine:
+
+```sh
+./sync.sh                       # -> $MAYAK_HOST or asakh@raspberrypi, ~/repos/mayak
+./sync.sh user@box /srv/mayak   # explicit target and path
+./sync.sh -n                    # dry run
+make sync                       # via make (make sync HOST=user@box to override)
+```
+
+Pure rsync, no remote commands. `.env`, `data/`, and `.local-backup/` are never
+transferred or deleted on the target.
+
+**2. Deploy** — on the target (e.g. ssh'd into the Pi):
+
+```sh
+cd ~/repos/mayak
+make deploy                     # docker compose pull server + up -d --build
+```
+
+First time on a fresh host:
+
+```sh
+ssh asakh@raspberrypi 'mkdir -p ~/repos/mayak'
+./sync.sh                                                    # from the dev machine
+ssh asakh@raspberrypi
+cd ~/repos/mayak && cp .env.example .env && $EDITOR .env
+make deploy
+```
+
+Bring the world with `make restore SNAP=latest` on the target, or by copying `./data`.
+
 ## Porting to another host
 
-1. `git clone` the repo.
-2. Copy your `.env` across (it holds the restic password and R2 keys — keep it safe, it's gitignored).
-3. Bring the world with you: either restore from R2 (`make restore SNAP=latest`) or copy `./data`.
+1. `git clone` the repo (or `./sync.sh` from a working copy).
+2. Get `.env` onto the target (it holds the restic password and R2 keys — gitignored, never rsynced).
+3. Bring the world: `make restore SNAP=latest`, or copy `./data`.
 4. `make up`.
 
 Nothing is host-specific. `restart: unless-stopped` handles reboots; there are no
