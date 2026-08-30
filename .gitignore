@@ -1,0 +1,5 @@
+.env
+/data/
+/.local-backup/
+/.worktrees/
+*.log

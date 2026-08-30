@@ -1,0 +1,59 @@
+name: mayak
+
+services:
+  server:
+    image: itzg/minecraft-server:java21
+    container_name: mayak
+    tty: true
+    stdin_open: true
+    ports:
+      - "${SERVER_PORT:-25565}:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "${MC_VERSION:-LATEST}"
+      MEMORY: "${MC_MEMORY:-4G}"
+      ONLINE_MODE: "${ONLINE_MODE:-TRUE}"
+      OVERRIDE_SERVER_PROPERTIES: "true"
+      ENABLE_RCON: "true"
+      RCON_PORT: "25575"
+      RCON_PASSWORD: "${RCON_PASSWORD:?set RCON_PASSWORD in .env}"
+      ENABLE_WHITELIST: "${ENABLE_WHITELIST:-FALSE}"
+      ENFORCE_WHITELIST: "${ENFORCE_WHITELIST:-FALSE}"
+      WHITELIST: "${WHITELIST:-}"
+      OPS: "${OPS:-}"
+    volumes:
+      - "${DATA_DIR:-./data}:/data"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      start_period: 5m
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  backup:
+    build: ./backup
+    image: mayak-backup:local
+    container_name: mayak-backup
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      RCON_HOST: "server"
+      RCON_PORT: "25575"
+      RCON_PASSWORD: "${RCON_PASSWORD:?set RCON_PASSWORD in .env}"
+      RESTIC_PASSWORD: "${RESTIC_PASSWORD:?set RESTIC_PASSWORD in .env}"
+      RESTIC_REPOSITORY: "${RESTIC_REPOSITORY:?set RESTIC_REPOSITORY in .env}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-auto}"
+      BACKUP_INTERVAL: "${BACKUP_INTERVAL:-3600}"
+      BACKUP_STARTUP_DELAY: "${BACKUP_STARTUP_DELAY:-60}"
+      RETENTION_HOURLY: "${RETENTION_HOURLY:-24}"
+      RETENTION_DAILY: "${RETENTION_DAILY:-7}"
+      RETENTION_WEEKLY: "${RETENTION_WEEKLY:-4}"
+    volumes:
+      - "${DATA_DIR:-./data}:/data:ro"
+      - "${LOCAL_BACKUP_DIR:-./.local-backup}:/local-backup"
+    restart: unless-stopped
