@@ -1,6 +1,6 @@
 # rcon-cli is lifted straight from the server image, so its architecture always
 # matches the host and there is no version/URL to keep in sync.
-FROM itzg/minecraft-server:java21 AS mc
+FROM itzg/minecraft-server:latest AS mc
 
 FROM alpine:3.20
 RUN apk add --no-cache restic ca-certificates tini bash coreutils

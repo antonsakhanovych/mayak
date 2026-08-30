@@ -2,7 +2,7 @@ name: mayak
 
 services:
   server:
-    image: itzg/minecraft-server:java21
+    image: itzg/minecraft-server:latest  # bundles multiple JDKs, auto-picks the right one for VERSION
     container_name: mayak
     tty: true
     stdin_open: true
