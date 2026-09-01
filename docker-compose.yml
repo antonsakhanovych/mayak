@@ -11,7 +11,7 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
-      VERSION: "${MC_VERSION:-LATEST}"
+      VERSION: "${MC_VERSION:-26.2}"
       MEMORY: "${MC_MEMORY:-4G}"
       ONLINE_MODE: "${ONLINE_MODE:-TRUE}"
       OVERRIDE_SERVER_PROPERTIES: "true"
