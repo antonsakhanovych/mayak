@@ -1,6 +1,11 @@
 COMPOSE := docker compose
 ENV_FILE := .env
 
+# world data location - mirrors the compose default; override in .env or on the
+# command line (make restore DATA_DIR=/path ...)
+DATA_DIR := $(shell sed -n 's/^DATA_DIR=//p' $(ENV_FILE) 2>/dev/null | tail -n1 | sed 's/[ \t]*#.*//; s/[ \t]*$$//')
+DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),./data)
+
 .DEFAULT_GOAL := help
 .PHONY: help up down restart logs console cmd backup snapshots restore pull build smoke sync deploy
 
@@ -12,7 +17,7 @@ $(ENV_FILE):
 	@echo "no $(ENV_FILE) - copy .env.example to .env and edit it"; exit 1
 
 up: $(ENV_FILE) ## start server + backup sidecar
-	@mkdir -p data
+	@mkdir -p "$(DATA_DIR)"
 	$(COMPOSE) up -d --build
 
 down: ## stop and remove containers
@@ -37,10 +42,11 @@ backup: ## run a backup cycle now
 snapshots: ## list cloud restic snapshots
 	$(COMPOSE) exec backup restic snapshots --tag mayak
 
-restore: ## restore ./data from a snapshot (stop the server first): make restore SNAP=latest
+restore: $(ENV_FILE) ## restore $(DATA_DIR) from a snapshot (stop the server first): make restore SNAP=latest
 	@test -n "$(SNAP)" || { echo 'usage: make restore SNAP=<id|latest>'; exit 1; }
-	@printf 'overwrite ./data from snapshot %s? [y/N] ' "$(SNAP)"; read a; [ "$$a" = y ] || exit 1
-	$(COMPOSE) run --rm --no-deps -v "$(CURDIR)/data:/restore" backup \
+	@printf 'overwrite %s from snapshot %s? [y/N] ' "$(DATA_DIR)" "$(SNAP)"; read a; [ "$$a" = y ] || exit 1
+	@mkdir -p "$(DATA_DIR)"
+	$(COMPOSE) run --rm --no-deps -v "$(abspath $(DATA_DIR)):/restore" backup \
 	  restic restore "$(SNAP):/data" --tag mayak --target /restore
 	@echo "done - run 'make up'"
 
@@ -54,7 +60,7 @@ sync: ## [dev machine] rsync the project to a host: make sync [HOST=user@host]
 	./sync.sh $(HOST)
 
 deploy: $(ENV_FILE) ## [target host] pull + build + (re)start after a sync
-	@mkdir -p data
+	@mkdir -p "$(DATA_DIR)"
 	$(COMPOSE) pull server
 	$(COMPOSE) up -d --build
 
