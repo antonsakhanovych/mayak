@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# mayak backup sidecar: pause world saves, snapshot /data to restic (cloud, and a
-# local repo when enabled), prune, resume saves. Loops on BACKUP_INTERVAL.
+# mayak backup sidecar: pause world saves, snapshot /data to restic (cloud),
+# prune, resume saves. Loops on BACKUP_INTERVAL.
 # Run with --once for a single cycle (used by `make backup`).
 set -euo pipefail
 
@@ -19,9 +19,6 @@ RETENTION_WEEKLY="${RETENTION_WEEKLY:-4}"
 DATA_DIR="/data"
 BACKUP_TAG="mayak"
 BACKUP_HOST="${BACKUP_HOSTNAME:-mayak}"
-LOCAL_DIR="/local-backup"
-LOCAL_MARKER="${LOCAL_DIR}/.mayak-enabled"
-LOCAL_REPO="${LOCAL_DIR}/restic"
 
 log() { printf '%s [backup] %s\n' "$(date -u +%FT%TZ)" "$*"; }
 
@@ -65,15 +62,6 @@ run_once() {
     backup_to "$RESTIC_REPOSITORY" || log "ERROR: cloud backup failed"
   else
     log "ERROR: cloud repo unreachable; skipping cloud backup"
-  fi
-
-  if [ -f "$LOCAL_MARKER" ]; then
-    mkdir -p "$LOCAL_REPO"
-    if ensure_repo "$LOCAL_REPO"; then
-      backup_to "$LOCAL_REPO" || log "ERROR: local backup failed"
-    fi
-  else
-    log "local backup not enabled ($LOCAL_MARKER absent); skipping"
   fi
 }
 

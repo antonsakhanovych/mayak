@@ -16,7 +16,7 @@ usage: ./sync.sh [-n] [user@host] [remote_dir]
   user@host     target (default: $MAYAK_HOST, else asakh@raspberrypi)
   remote_dir    path on target (default: $MAYAK_PATH, else ~/repos/mayak)
 
-.env, data/, and .local-backup/ are never transferred or deleted on the target.
+.env and data/ are never transferred or deleted on the target.
 EOF
   exit "${1:-0}"
 }
@@ -40,7 +40,6 @@ rsync_opts=(
   --exclude '.git/'
   --exclude '.worktrees/'
   --exclude 'data/'
-  --exclude '.local-backup/'
   --exclude '.env'
   --exclude '*.log'
 )

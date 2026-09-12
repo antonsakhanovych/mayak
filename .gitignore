@@ -1,5 +1,4 @@
 .env
-/data/
-/.local-backup/
+/mayak-mc/data/
 /.worktrees/
 *.log

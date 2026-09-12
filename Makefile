@@ -1,10 +1,12 @@
 COMPOSE := docker compose
 ENV_FILE := .env
+MC_ENV_FILE := mayak-mc/.env
+BACKUP_ENV_FILE := mayak-backup/.env
 
 # world data location - mirrors the compose default; override in .env or on the
 # command line (make restore DATA_DIR=/path ...)
 DATA_DIR := $(shell sed -n 's/^DATA_DIR=//p' $(ENV_FILE) 2>/dev/null | tail -n1 | sed 's/[ \t]*#.*//; s/[ \t]*$$//')
-DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),./data)
+DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),./mayak-mc/data)
 
 .DEFAULT_GOAL := help
 .PHONY: help up down restart logs console cmd backup snapshots restore pull build smoke sync deploy
@@ -16,7 +18,13 @@ help: ## list targets
 $(ENV_FILE):
 	@echo "no $(ENV_FILE) - copy .env.example to .env and edit it"; exit 1
 
-up: $(ENV_FILE) ## start server + backup sidecar
+$(MC_ENV_FILE):
+	@echo "no $(MC_ENV_FILE) - copy mayak-mc/.env.example to $(MC_ENV_FILE) and edit it"; exit 1
+
+$(BACKUP_ENV_FILE):
+	@echo "no $(BACKUP_ENV_FILE) - copy mayak-backup/.env.example to $(BACKUP_ENV_FILE) and edit it"; exit 1
+
+up: $(ENV_FILE) $(MC_ENV_FILE) $(BACKUP_ENV_FILE) ## start server + backup sidecar
 	@mkdir -p "$(DATA_DIR)"
 	$(COMPOSE) up -d --build
 
@@ -53,13 +61,13 @@ restore: $(ENV_FILE) ## restore $(DATA_DIR) from a snapshot (stop the server fir
 pull: ## pull the latest server image
 	$(COMPOSE) pull server
 
-build: ## build the backup image
+build: ## build the mayak-backup image
 	$(COMPOSE) build
 
 sync: ## [dev machine] rsync the project to a host: make sync [HOST=user@host]
 	./sync.sh $(HOST)
 
-deploy: $(ENV_FILE) ## [target host] pull + build + (re)start after a sync
+deploy: $(ENV_FILE) $(MC_ENV_FILE) $(BACKUP_ENV_FILE) ## [target host] pull + build + (re)start after a sync
 	@mkdir -p "$(DATA_DIR)"
 	$(COMPOSE) pull server
 	$(COMPOSE) up -d --build

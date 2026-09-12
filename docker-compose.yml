@@ -9,17 +9,17 @@ services:
     ports:
       - "${SERVER_PORT:-25565}:25565"
     env_file:
-      - mc.env
+      - mayak-mc/mc.env
+      - mayak-mc/.env
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
-      MEMORY: "${MC_MEMORY:-4G}"
       OVERRIDE_SERVER_PROPERTIES: "true"
       ENABLE_RCON: "true"
       RCON_PORT: "25575"
       RCON_PASSWORD: "${RCON_PASSWORD:?set RCON_PASSWORD in .env}"
     volumes:
-      - "${DATA_DIR:-./data}:/data"
+      - "${DATA_DIR:-./mayak-mc/data}:/data"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mc-health"]
@@ -29,24 +29,19 @@ services:
       retries: 10
 
   backup:
-    build: ./backup
+    build: ./mayak-backup
     image: mayak-backup:local
     container_name: mayak-backup
     depends_on:
       server:
         condition: service_healthy
     env_file:
-      - backup.env
+      - mayak-backup/backup.env
+      - mayak-backup/.env
     environment:
       RCON_HOST: "server"
       RCON_PORT: "25575"
       RCON_PASSWORD: "${RCON_PASSWORD:?set RCON_PASSWORD in .env}"
-      RESTIC_PASSWORD: "${RESTIC_PASSWORD:?set RESTIC_PASSWORD in .env}"
-      RESTIC_REPOSITORY: "${RESTIC_REPOSITORY:?set RESTIC_REPOSITORY in .env}"
-      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
-      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
-      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-auto}"
     volumes:
-      - "${DATA_DIR:-./data}:/data:ro"
-      - "${LOCAL_BACKUP_DIR:-./.local-backup}:/local-backup"
+      - "${DATA_DIR:-./mayak-mc/data}:/data:ro"
     restart: unless-stopped
