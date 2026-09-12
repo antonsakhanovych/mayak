@@ -93,6 +93,12 @@ https://cdn.modrinth.com/data/<id2>/versions/<v2>/pack2.zip"
 Pick pack versions that target the same `MC_VERSION` this server runs.
 Apply with `make restart`.
 
+`.env` is the source of truth: `REMOVE_OLD_DATAPACKS` (default `true`)
+deletes any `.zip` in `world/datapacks/` that isn't in the current
+`DATAPACKS` list before reinstalling it, so removing a URL and restarting
+actually removes the pack. Set it to `FALSE` if you ever add packs by hand
+outside of `DATAPACKS` and want them left alone.
+
 ## Sync and deploy
 
 Two steps, run in two places. Sync moves files only; deploy runs on the target.

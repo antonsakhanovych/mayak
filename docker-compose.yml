@@ -23,6 +23,7 @@ services:
       WHITELIST: "${WHITELIST:-}"
       OPS: "${OPS:-}"
       DATAPACKS: "${DATAPACKS:-}"
+      REMOVE_OLD_DATAPACKS: "${REMOVE_OLD_DATAPACKS:-true}"
     volumes:
       - "${DATA_DIR:-./data}:/data"
     restart: unless-stopped
