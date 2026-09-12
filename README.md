@@ -73,6 +73,19 @@ make restore SNAP=latest      # or a snapshot id from `make snapshots`
 make up
 ```
 
+## Data packs
+
+Set `DATAPACKS` in `.env` to one or more `.zip` URLs (newline- or
+comma-separated), e.g. a pack downloaded from Modrinth. The image installs
+them into `world/datapacks/` on (re)start:
+
+```sh
+DATAPACKS=https://cdn.modrinth.com/data/<id>/versions/<version>/pack.zip
+```
+
+Pick a pack version that targets the same `MC_VERSION` this server runs.
+Apply with `make restart`.
+
 ## Sync and deploy
 
 Two steps, run in two places. Sync moves files only; deploy runs on the target.

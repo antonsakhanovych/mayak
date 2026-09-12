@@ -22,6 +22,7 @@ services:
       ENFORCE_WHITELIST: "${ENFORCE_WHITELIST:-FALSE}"
       WHITELIST: "${WHITELIST:-}"
       OPS: "${OPS:-}"
+      DATAPACKS: "${DATAPACKS:-}"
     volumes:
       - "${DATA_DIR:-./data}:/data"
     restart: unless-stopped
