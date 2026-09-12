@@ -2,3 +2,4 @@
 /mayak-mc/data/
 /.worktrees/
 *.log
+/mayak-bot/target
