@@ -75,15 +75,22 @@ make up
 
 ## Data packs
 
-Set `DATAPACKS` in `.env` to one or more `.zip` URLs (newline- or
-comma-separated), e.g. a pack downloaded from Modrinth. The image installs
-them into `world/datapacks/` on (re)start:
+Set `DATAPACKS` in `.env` to a pack's `.zip` URL, e.g. from Modrinth. The
+image installs it into `world/datapacks/` on (re)start:
 
 ```sh
 DATAPACKS=https://cdn.modrinth.com/data/<id>/versions/<version>/pack.zip
 ```
 
-Pick a pack version that targets the same `MC_VERSION` this server runs.
+For more than one, quote the value and put each URL on its own line so the
+list stays readable:
+
+```sh
+DATAPACKS="https://cdn.modrinth.com/data/<id1>/versions/<v1>/pack1.zip
+https://cdn.modrinth.com/data/<id2>/versions/<v2>/pack2.zip"
+```
+
+Pick pack versions that target the same `MC_VERSION` this server runs.
 Apply with `make restart`.
 
 ## Sync and deploy
