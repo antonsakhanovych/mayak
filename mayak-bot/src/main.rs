@@ -5,6 +5,7 @@ use teloxide::{
     dispatching::UpdateFilterExt,
     prelude::*,
     types::{Message, Update, User},
+    utils::command::BotCommands,
 };
 
 use crate::{
@@ -49,6 +50,9 @@ impl AppState {
 async fn main() {
     let app = Arc::new(AppState::from_env().await);
     let bot = Bot::from_env();
+    bot.set_my_commands(Command::bot_commands())
+        .await
+        .expect("failed to register commands with Telegram");
 
     let schema = Update::filter_message()
         .filter_map(|msg: Message| msg.from.clone())
