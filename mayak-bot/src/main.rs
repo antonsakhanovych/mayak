@@ -10,7 +10,7 @@ use teloxide::{
 
 use crate::{
     allowlist::Allowlist,
-    bot::{Command, answer},
+    bot::{Command, answer, unknown_command},
     rcon::RconClient,
     stats::StatsReader,
 };
@@ -48,7 +48,12 @@ impl AppState {
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+    log::info!("starting mayak-bot");
+
     let app = Arc::new(AppState::from_env().await);
+    log::info!("connected to RCON, allowlist loaded");
+
     let bot = Bot::from_env();
     bot.set_my_commands(Command::bot_commands())
         .await
@@ -57,8 +62,8 @@ async fn main() {
     let schema = Update::filter_message()
         .filter_map(|msg: Message| msg.from.clone())
         .filter(|user: User, app: Arc<AppState>| app.allowlist.contains(user.id))
-        .filter_command::<Command>()
-        .endpoint(answer);
+        .branch(dptree::entry().filter_command::<Command>().endpoint(answer))
+        .branch(Message::filter_text().endpoint(unknown_command));
 
     Dispatcher::builder(bot, schema)
         .dependencies(dptree::deps![app])

@@ -1,10 +1,10 @@
 use std::{str::FromStr, sync::Arc};
 
 use teloxide::{
-    Bot,
-    macros::BotCommands,
+    Bot, macros,
     requests::{Requester, ResponseResult},
     types::{Message, User},
+    utils::command::BotCommands,
 };
 
 use crate::AppState;
@@ -32,7 +32,7 @@ impl FromStr for Metric {
     }
 }
 
-#[derive(BotCommands, Clone)]
+#[derive(Debug, macros::BotCommands, Clone)]
 #[command(rename_rule = "lowercase", description = "Commands:")]
 pub enum Command {
     #[command(description = "server status and who's online")]
@@ -55,6 +55,7 @@ pub async fn answer(
     cmd: Command,
     app: Arc<AppState>,
 ) -> ResponseResult<()> {
+    log::info!("{:?} from {} ({})", cmd, user.id, user.first_name);
     let reply = match cmd {
         Command::Status => match app.rcon.list_online().await {
             Ok(names) if names.is_empty() => "No one is online right now.".to_string(),
@@ -100,5 +101,14 @@ pub async fn answer(
     };
 
     bot.send_message(msg.chat.id, reply).await?;
+    Ok(())
+}
+
+pub async fn unknown_command(bot: Bot, msg: Message) -> ResponseResult<()> {
+    bot.send_message(
+        msg.chat.id,
+        format!("Didn't understand that.\n\n{}", Command::descriptions()),
+    )
+    .await?;
     Ok(())
 }
