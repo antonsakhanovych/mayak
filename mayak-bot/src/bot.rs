@@ -7,7 +7,7 @@ use teloxide::{
     types::{Message, User},
 };
 
-use crate::{allowlist::Allowlist, rcon::RconClient, stats::StatsReader};
+use crate::AppState;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Metric {
@@ -53,18 +53,16 @@ pub async fn answer(
     msg: Message,
     user: User,
     cmd: Command,
-    stats: Arc<StatsReader>,
-    rcon: Arc<RconClient>,
-    allowlist: Arc<Allowlist>,
+    app: Arc<AppState>,
 ) -> ResponseResult<()> {
     let reply = match cmd {
-        Command::Status => match rcon.list_online().await {
+        Command::Status => match app.rcon.list_online().await {
             Ok(names) if names.is_empty() => "No one is online right now.".to_string(),
             Ok(names) => format!("Online now: {}", names.join(", ")),
             Err(e) => format!("Couldn't reach the server: {e}"),
         },
 
-        Command::Player(username) => match stats.player_card(&username) {
+        Command::Player(username) => match app.stats.player_card(&username) {
             Some(card) => format!(
                 "{}\nPlaytime: {:.1}h\nDeaths: {}\nMob kills: {}\nAdvancements: {}",
                 card.username,
@@ -77,7 +75,7 @@ pub async fn answer(
         },
 
         Command::Leaderboard(metric) => {
-            let rows = stats.leaderboard(metric, 5);
+            let rows = app.stats.leaderboard(metric, 5);
             if rows.is_empty() {
                 "No data yet.".to_string()
             } else {
@@ -90,10 +88,11 @@ pub async fn answer(
         }
 
         Command::Say(text) => {
-            let username = allowlist
+            let username = app
+                .allowlist
                 .linked_username(user.id)
                 .expect("checked by the allowlist filter upstream");
-            match rcon.say(username, &text).await {
+            match app.rcon.say(username, &text).await {
                 Ok(()) => "sent".to_string(),
                 Err(e) => format!("failed to send: {e}"),
             }
