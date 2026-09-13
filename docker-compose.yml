@@ -28,6 +28,21 @@ services:
       timeout: 10s
       retries: 10
 
+  bot:
+      build: ./mayak-bot
+      image: mayak-bot:local
+      container_name: mayak-bot
+      depends_on:
+        server:
+          condition: service_healthy
+      env_file:
+        - mayak-bot/.env
+      environment:
+        RCON_PASSWORD: "${RCON_PASSWORD:?set RCON_PASSWORD in .env}"
+      volumes:
+        - "${DATA_DIR:-./mayak-mc/data}:/data:ro"
+      restart: unless-stopped
+
   backup:
     build: ./mayak-backup
     image: mayak-backup:local
