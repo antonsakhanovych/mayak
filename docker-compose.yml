@@ -13,7 +13,7 @@ services:
       - mayak-mc/.env
     environment:
       EULA: "TRUE"
-      TYPE: "PAPER"
+      TYPE: "FABRIC"
       OVERRIDE_SERVER_PROPERTIES: "true"
       ENABLE_RCON: "true"
       RCON_PORT: "25575"
