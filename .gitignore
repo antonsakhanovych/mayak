@@ -3,3 +3,5 @@
 /.worktrees/
 *.log
 /mayak-bot/target
+/mayak-cloudflared/config.yml
+/mayak-cloudflared/credentials.json

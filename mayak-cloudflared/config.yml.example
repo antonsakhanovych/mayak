@@ -1,0 +1,22 @@
+# Copy to mayak-cloudflared/config.yml and edit. Gitignored - the tunnel ID
+# and hostname are deployment-specific, not shared across every mayak
+# install the way the rest of this repo's config is.
+#
+# Get a tunnel ID and credentials JSON with `cloudflared tunnel create
+# <name>` (any machine with cloudflared installed and logged into the target
+# Cloudflare account works - it doesn't have to be this host). Copy the
+# generated ~/.cloudflared/<id>.json here as mayak-cloudflared/credentials.json
+# (also gitignored).
+tunnel: <your-tunnel-id>
+credentials-file: /etc/cloudflared/credentials.json
+
+# Workaround for IPv6 path-MTU issues seen on some home networks (plain TCP
+# connects fine, but TLS/QUIC traffic silently drops). Docker's default
+# bridge network is IPv4-only anyway, so this is likely a no-op running in
+# Docker, but cheap insurance if that ever changes.
+edge-ip-version: "4"
+
+ingress:
+  - hostname: <your-hostname>
+    service: http://server:8100   # BlueMap, reached directly on the compose network
+  - service: http_status:404

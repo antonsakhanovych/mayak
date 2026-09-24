@@ -44,6 +44,25 @@ services:
         - "${DATA_DIR:-./mayak-mc/data}:/data:ro"
       restart: unless-stopped
 
+  # Required, same tier as the other services - needs
+  # mayak-cloudflared/{config.yml,credentials.json} set up first (gitignored,
+  # deployment-specific - see mayak-cloudflared/config.yml.example);
+  # `make up`/`make deploy` guard on both existing, same pattern as the
+  # other env files. Reaches BlueMap at http://server:8100 directly on this
+  # compose network, so the server no longer publishes that port to the
+  # host - only reachable through the tunnel.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: mayak-cloudflared
+    command: tunnel run
+    depends_on:
+      server:
+        condition: service_healthy
+    volumes:
+      - ./mayak-cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      - ./mayak-cloudflared/credentials.json:/etc/cloudflared/credentials.json:ro
+    restart: unless-stopped
+
   backup:
     build: ./mayak-backup
     image: mayak-backup:local

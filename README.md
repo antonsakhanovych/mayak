@@ -11,6 +11,7 @@ Each container gets its own directory:
 |---|---|---|---|
 | `server` | `mayak-mc/` | `itzg/minecraft-server` | Paper server. Game port published; RCON stays on the internal network. |
 | `backup` | `mayak-backup/` | built from `./mayak-backup/` | Every `BACKUP_INTERVAL` seconds: pause saves via RCON, `restic` snapshot of `/data` to Cloudflare R2, prune, resume saves. |
+| `cloudflared` | `mayak-cloudflared/` | `cloudflare/cloudflared` | Tunnels BlueMap's web viewer out publicly via `http://server:8100` on the internal network - the port is never published to the host. |
 
 World and server files live in `./mayak-mc/data` (bind mount, gitignored).
 The root `Makefile` stays generic — it orchestrates both services via
@@ -55,7 +56,10 @@ cp mayak-mc/.env.example mayak-mc/.env
 cp mayak-backup/.env.example mayak-backup/.env
 $EDITOR mayak-backup/.env         # set RESTIC_PASSWORD, RESTIC_REPOSITORY, R2 keys
 $EDITOR mayak-mc/mc.env           # review WHITELIST/OPS before starting — enforcement is always on
-make up                           # builds the backup image and starts both services
+cp mayak-cloudflared/config.yml.example mayak-cloudflared/config.yml
+$EDITOR mayak-cloudflared/config.yml   # set tunnel id + hostname
+# copy that tunnel's credentials JSON to mayak-cloudflared/credentials.json
+make up                           # builds the backup image and starts everything, cloudflared included
 make logs                         # watch it come up
 make console                      # RCON prompt once it's healthy
 ```
@@ -75,6 +79,7 @@ Connect on `localhost` (or the host's LAN IP), port `SERVER_PORT` (default 25565
 | `make snapshots` | list cloud snapshots |
 | `make restore SNAP=latest` | restore the world data from a snapshot (stop the server first) |
 | `make pull` | pull a newer server image |
+| `make cloudflared` | (re)start just the tunnel container, e.g. after editing its config |
 | `make smoke` | up → wait healthy → backup → list snapshots |
 | `make sync [HOST=user@host]` | *(dev machine)* rsync the project to a host |
 | `make deploy` | *(target host)* pull + build + (re)start after a sync |
@@ -138,8 +143,8 @@ make sync                       # via make (make sync HOST=user@box to override)
 ```
 
 Pure rsync, no remote commands. Every `.env` file (root, `mayak-mc/.env`,
-`mayak-backup/.env`) and the world data are never transferred or deleted on
-the target.
+`mayak-backup/.env`), `mayak-cloudflared/config.yml` and `credentials.json`,
+and the world data are never transferred or deleted on the target.
 
 **2. Deploy** — on the target (e.g. ssh'd into the Pi):
 

@@ -2,6 +2,8 @@ COMPOSE := docker compose
 ENV_FILE := .env
 MC_ENV_FILE := mayak-mc/.env
 BACKUP_ENV_FILE := mayak-backup/.env
+CLOUDFLARED_CONFIG := mayak-cloudflared/config.yml
+CLOUDFLARED_CREDS := mayak-cloudflared/credentials.json
 
 # world data location - mirrors the compose default; override in .env or on the
 # command line (make restore DATA_DIR=/path ...)
@@ -9,7 +11,7 @@ DATA_DIR := $(shell sed -n 's/^DATA_DIR=//p' $(ENV_FILE) 2>/dev/null | tail -n1 
 DATA_DIR := $(if $(DATA_DIR),$(DATA_DIR),./mayak-mc/data)
 
 .DEFAULT_GOAL := help
-.PHONY: help up down restart logs console cmd backup snapshots restore pull build smoke sync deploy
+.PHONY: help up down restart logs console cmd backup snapshots restore pull build smoke sync deploy cloudflared
 
 help: ## list targets
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -24,7 +26,13 @@ $(MC_ENV_FILE):
 $(BACKUP_ENV_FILE):
 	@echo "no $(BACKUP_ENV_FILE) - copy mayak-backup/.env.example to $(BACKUP_ENV_FILE) and edit it"; exit 1
 
-up: $(ENV_FILE) $(MC_ENV_FILE) $(BACKUP_ENV_FILE) ## start server + backup sidecar
+$(CLOUDFLARED_CONFIG):
+	@echo "no $(CLOUDFLARED_CONFIG) - copy mayak-cloudflared/config.yml.example to $(CLOUDFLARED_CONFIG) and edit it"; exit 1
+
+$(CLOUDFLARED_CREDS):
+	@echo "no $(CLOUDFLARED_CREDS) - copy your tunnel's credentials JSON to $(CLOUDFLARED_CREDS)"; exit 1
+
+up: $(ENV_FILE) $(MC_ENV_FILE) $(BACKUP_ENV_FILE) $(CLOUDFLARED_CONFIG) $(CLOUDFLARED_CREDS) ## start everything, cloudflared included
 	@mkdir -p "$(DATA_DIR)"
 	$(COMPOSE) up -d --build
 
@@ -64,10 +72,13 @@ pull: ## pull the latest server image
 build: ## build the mayak-backup image
 	$(COMPOSE) build
 
+cloudflared: $(CLOUDFLARED_CONFIG) $(CLOUDFLARED_CREDS) ## (re)start just the tunnel container, e.g. after editing its config
+	$(COMPOSE) up -d cloudflared
+
 sync: ## [dev machine] rsync the project to a host: make sync [HOST=user@host]
 	./sync.sh $(HOST)
 
-deploy: $(ENV_FILE) $(MC_ENV_FILE) $(BACKUP_ENV_FILE) ## [target host] pull + build + (re)start after a sync
+deploy: $(ENV_FILE) $(MC_ENV_FILE) $(BACKUP_ENV_FILE) $(CLOUDFLARED_CONFIG) $(CLOUDFLARED_CREDS) ## [target host] pull + build + (re)start after a sync
 	@mkdir -p "$(DATA_DIR)"
 	$(COMPOSE) pull server
 	$(COMPOSE) up -d --build

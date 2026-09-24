@@ -16,7 +16,8 @@ usage: ./sync.sh [-n] [user@host] [remote_dir]
   user@host     target (default: $MAYAK_HOST, else asakh@raspberrypi)
   remote_dir    path on target (default: $MAYAK_PATH, else ~/repos/mayak)
 
-.env and data/ are never transferred or deleted on the target.
+.env, data/, and mayak-cloudflared/{config.yml,credentials.json} are never
+transferred or deleted on the target.
 EOF
   exit "${1:-0}"
 }
@@ -42,6 +43,8 @@ rsync_opts=(
   --exclude 'data/'
   --exclude '.env'
   --exclude '*.log'
+  --exclude 'mayak-cloudflared/config.yml'
+  --exclude 'mayak-cloudflared/credentials.json'
 )
 (( dry )) && rsync_opts+=(--dry-run --verbose)
 
