@@ -129,18 +129,6 @@ both in the same commit when upgrading. Apply with `make restart`.
 actually removes the pack. Set it to `FALSE` if you ever add packs by hand
 outside of `DATAPACKS` and want them left alone.
 
-## Mods outside Modrinth
-
-Mods on Modrinth go in `MODRINTH_PROJECTS`. Anything else goes in `MODS` in
-`mayak-mc/mc.env` as a direct jar URL, pinned to a release. GatedWarp is
-installed this way. Apply with `make restart`.
-
-GatedWarp's permissions (`gatedwarp.admin`, `gatedwarp.bypass`,
-`gatedwarp.use`) are managed with LuckPerms, for example
-`make cmd C="lp group warpmasters permission set gatedwarp.admin true"`.
-Its own settings are in `config/gatedwarp.json` inside the data volume. See
-the [GatedWarp README](https://github.com/antonsakhanovych/gatedwarp#readme).
-
 ## Sync and deploy
 
 Two steps, run in two places. Sync moves files only; deploy runs on the target.
